@@ -33,92 +33,139 @@ class ClientGraphics(object):
         self.window = Tk()
         self.frame = Frame(self.window, bg='ghost white')
         self.window.geometry("1500x700")
+        self.window.title("SearchMovieTool")
         self.frame.pack(side="top", expand=True, fill="both")
         self.widgets = dict()
-        self.movie = StringVar(self.frame)
-        self.actor = StringVar(self.frame)
+        self.pos = 0
+        self.movie = ""
+        self.actor = ""
+        self.search = StringVar(self.frame)
+        self.search_type = StringVar(self.frame)
         self.lst = list()
         self.movies = list()
-        self.total_rows = 4
+        self.reviews = list()
+        self.total_rows = 5
         self.total_columns = 2
+        self.w = 300
+        self.h = 50
         self.home()
+
 
     def clear_frame(self):
         for widgets in self.frame.winfo_children():
             widgets.destroy()
 
-    def search_for_movie(self):
-        self.clear_frame()
-        width = 400
-        height = 100
-        x = self.W / 2 - width / 2
-        y = self.H / 2 - height / 2
-        entry_movie = Entry(self.frame, textvariable=self.movie, bg='snow', font=('Arial', 20, 'bold'))
-        entry_movie.place(x=self.W / 2 - width / 2, y=self.H / 2 - 1.5 * height, width=width, height=height)
-        self.widgets["entry_movie"] = entry_movie
-        button_movie = Button(self.frame, text="Search For Movie", command=self.get_movie, bg='snow')
-        button_movie.place(x=self.W / 2 - width / 2, y=self.H / 2 + 0.5 * height, width=width, height=height)
-        button_back = Button(self.frame, text="< Go Back", command=self.home, bg='snow')
-        button_back.place(x=self.W / 4 - width / 2, y=self.H - self.H / 4 + 0.5 * height, width=width, height=height)
-
-    def search_for_actor(self):
-        self.clear_frame()
-        width = 400
-        height = 100
-        x = self.W / 2 - width / 2
-        y = self.H / 2 - height / 2
-        entry_actor = Entry(self.frame, textvariable=self.actor, bg='snow', font=('Arial', 20, 'bold'))
-        entry_actor.place(x=self.W / 2 - width / 2, y=self.H / 2 - 1.5 * height, width=width, height=height)
-        self.widgets["entry_actor"] = entry_actor
-        button_actor = Button(self.frame, text="Search For Actor", command=self.get_movie_actors, bg='snow')
-        button_actor.place(x=self.W / 2 - width / 2, y=self.H / 2 + 0.5 * height, width=width, height=height)
-        button_back = Button(self.frame, text="< Go Back", command=self.home, bg='snow')
-        button_back.place(x=self.W / 4 - width / 2, y=self.H - self.H / 4 + 0.5 * height, width=width, height=height)
+    
+    def select(self):
+        print(self.search_type.get())
+        pass
 
     def home(self):
         self.clear_frame()
-        width = 400
-        height = 100
-        button_movie = Button(self.frame, text="Search For Movie", command=self.search_for_movie, bg='snow')
-        button_movie.place(x=self.W / 2 - 1.5 * width, y=self.H / 2 - height / 2, width=width, height=height)
-        button_actor = Button(self.frame, text="Search For Actor", command=self.search_for_actor, bg='snow')
-        button_actor.place(x=self.W / 2 + 0.5 * width, y=self.H / 2 - height / 2, width=width, height=height)
+        entry_movie = Entry(self.frame, textvariable=self.search, bg='snow', font=('Arial', 20, 'bold'))
+        entry_movie.place(x=self.W / 2 - 3 / 4 * self.w, y=self.H / 2 - 1.5 * self.h, width=3 / 2 * self.w,
+                          height=self.h)
+        self.search_type.set("Movie")
+        radio_btn1 = Radiobutton(self.frame, text="Movie", variable=self.search_type, value="Movie", bg="ghost white",
+                                 command=self.select)
+        radio_btn1.place(x=self.W / 2 - self.w / 2, y=self.H / 2 + 0.1 * self.h)
+
+        radio_btn2 = Radiobutton(self.frame, text="Actor", variable=self.search_type, value="Actor", bg="ghost white",
+                                 command=self.select)
+        radio_btn2.place(x=self.W / 2 + self.w / 2, y=self.H / 2 + 0.1 * self.h)
+        button_movie = Button(self.frame, text="Search", command=self.parse_input, bg='snow')
+        button_movie.place(x=self.W / 2 - self.w / 2, y=self.H / 2 + 0.5 * self.h, width=self.w, height=self.h)
+
+    def parse_input(self):
+        if self.search_type.get() == "Movie":
+            self.movie = self.search.get()
+            self.get_movie()
+        if self.search_type.get() == "Actor":
+            self.actor = self.search.get()
+            self.get_movie_actors()
 
     def display_info_movie(self):
         self.clear_frame()
-        width = 400
-        height = 100
         canvas = Canvas(self.frame, width=400, height=100, bg='white')
         canvas.pack()
         for i in range(self.total_rows):
             for j in range(self.total_columns):
                 if j % 2 == 1:
-                    cell = Text(canvas, width=50, height=5, fg='blue',
-                                font=('Arial', 16, 'bold'), borderwidth=4, relief="groove")
-                    cell.grid(row=i, column=j)
-                    cell.insert(END, self.lst[i][j])
+                    if i == 4:
+                        cell = Text(canvas, width=50, height=6, fg='blue',
+                                    font=('Arial', 16, 'bold'), borderwidth=4, relief="groove")
+                        cell.grid(row=i, column=j)
+                        cell.insert(END, self.lst[i][j])
+                        scrollbar = Scrollbar(canvas, orient='vertical', command=cell.yview)
+                        scrollbar.grid(row=i, column=2, sticky='ns')
+                        cell['yscrollcommand'] = scrollbar.set
+                    else:
+                        cell = Text(canvas, width=50, height=3, fg='blue',
+                                    font=('Arial', 16, 'bold'), borderwidth=4, relief="groove")
+                        cell.grid(row=i, column=j)
+                        cell.insert(END, self.lst[i][j])
                 else:
-                    cell = Text(canvas, width=20, height=5, fg='blue',
-                                font=('Arial', 16, 'bold'), borderwidth=4, relief="groove")
-                    cell.grid(row=i, column=j)
-                    cell.insert(END, self.lst[i][j])
+                    if i == 4:
+                        cell = Text(canvas, width=20, height=6, fg='blue',
+                                    font=('Arial', 16, 'bold'), borderwidth=4, relief="groove")
+                        cell.grid(row=i, column=j)
+                        cell.insert(END, self.lst[i][j])
+                    else:
+                        cell = Text(canvas, width=20, height=3, fg='blue',
+                                    font=('Arial', 16, 'bold'), borderwidth=4, relief="groove")
+                        cell.grid(row=i, column=j)
+                        cell.insert(END, self.lst[i][j])
+
         button_reviews = Button(self.frame, text="Reviews >", command=self.display_reviews, bg='snow')
-        button_reviews.place(x=self.W / 2 + 0.5 * width, y=self.H - 1.5 * height, width=width, height=height)
-        button_back = Button(self.frame, text="< Go Back", command=self.search_for_movie, bg='snow')
-        button_back.place(x=self.W / 4 - width / 2, y=self.H - 1.5 * height, width=width, height=height)
+        button_reviews.place(x=self.W / 2 + 0.5 * self.w, y=self.H - 1.5 * self.h, width=self.w, height=self.h)
+        button_reviews = Button(self.frame, text="< Back", command=self.home, bg='snow')
+        button_reviews.place(x=self.W / 2 - 0.5 * self.w, y=self.H - 1.5 * self.h, width=self.w, height=self.h)
 
     def display_info_actor(self):
         self.clear_frame()
-        width = 400
-        height = 100
         canvas = Canvas(self.frame, width=400, height=100, bg='white')
         canvas.pack()
-        for i in range(len(self.movies) - 1):
+        for i in range(len(self.movies)):
             cell = Label(canvas, width=50, height=2, fg='blue', text=self.movies.pop(0),
-                        font=('Arial', 16, 'bold'), relief="groove")
+                         font=('Arial', 16, 'bold'), relief="groove")
             cell.pack()
-        button_back = Button(self.frame, text="< Go Back", command=self.search_for_actor, bg='snow')
-        button_back.place(x=self.W / 4 - width / 2, y=self.H - 1.5 * height, width=width, height=height)
+        button_back = Button(self.frame, text="< Back", command=self.home, bg='snow')
+        button_back.place(x=self.W / 4 - self.w / 2, y=self.H - 1.5 * self.h, width=self.w, height=self.h)
+
+    def display_reviews(self):
+        self.clear_frame()
+        canvas = Canvas(self.frame, width=1500, height=600, bg='green')
+        cell = Text(canvas, fg='blue', font=('Arial', 16, 'bold'), borderwidth=4, relief="groove", padx=20, pady=20)
+        cell.place(x=self.W / 4, y=50, width=2 * (self.W / 4), height=500)
+        cell.insert(END, self.reviews[0])
+        self.widgets["cell"] = cell
+        next_btn = canvas.create_polygon(self.W / 5, self.H / 2, self.W / 5 + 40, self.H / 2 - 40, self.W / 5 + 40,
+                                         self.H / 2 + 40, self.W / 5, self.H / 2, fill="red", outline="white", width=2)
+        prev_btn = canvas.create_polygon(4 * self.W / 5, self.H / 2, 4 * self.W / 5 - 40, self.H / 2 - 40,
+                                         4 * self.W / 5 - 40, self.H / 2 + 40, 4 * self.W / 5, self.H / 2, fill="red",
+                                         outline="white", width=2)
+        canvas.tag_bind(next_btn, '<Button-1>', self.next)
+        canvas.tag_bind(prev_btn, '<Button-1>', self.prev)
+        canvas.pack()
+
+        button_back = Button(self.frame, text="< Back", command=self.display_info_movie, bg='snow')
+        button_back.place(x=self.W / 4 - self.w / 2, y=self.H - 1.5 * self.h, width=self.w, height=self.h)
+
+    def next(self, event):
+        self.widgets["cell"].delete('1.0', END)
+        if self.pos == 6:
+            self.pos = 0
+        else:
+            self.pos += 1
+        self.widgets["cell"].insert(END, self.reviews[self.pos])
+
+    def prev(self, event):
+        self.widgets["cell"].delete('1.0', END)
+        if self.pos == 0:
+            self.pos = 6
+        else:
+            self.pos -= 1
+        self.widgets["cell"].insert(END, self.reviews[self.pos])
 
 
 
