@@ -19,7 +19,8 @@ print(response)
 
 def send_msg_to_server(x):
     ClientSocket.sendall(str.encode(x))
-    output = ClientSocket.recv(2048).decode('utf-8')
+    size = ClientSocket.recv(1024).decode('utf-8')
+    output = ClientSocket.recv(int(size)).decode('utf-8')
     return output
 
 
@@ -39,6 +40,7 @@ class ClientGraphics(object):
         self.pos = 0
         self.movie = ""
         self.actor = ""
+        self.url_image = ""
         self.search = StringVar(self.frame)
         self.search_type = StringVar(self.frame)
         self.lst = list()
@@ -151,6 +153,40 @@ class ClientGraphics(object):
         button_back = Button(self.frame, text="< Back", command=self.display_info_movie, bg='snow')
         button_back.place(x=self.W / 4 - self.w / 2, y=self.H - 1.5 * self.h, width=self.w, height=self.h)
 
+    def get_movie(self):
+        if len(self.movie) > 0:
+            self.lst.clear()
+            client_msg = "movie-" + self.movie
+            movie_info = json.loads(send_msg_to_server(client_msg))
+            print(movie_info)
+
+            if movie_info != "none":
+                keys = list(movie_info.keys())
+                for i in range(self.total_rows - 1):
+                    tp = (keys[i], movie_info.get(keys[i]))
+                    self.lst.append(tp)
+                self.url_image = movie_info.get("movieImage")
+
+                client_msg = "movies-" + self.movie
+                serv_info = json.loads(send_msg_to_server(client_msg))
+                actors = "\n".join(serv_info["cast"])
+                tp = ("Actors", actors)
+                self.lst.append(tp)
+
+                client_msg = "reviews-" + self.movie
+                serv_info = json.loads(send_msg_to_server(client_msg))
+                self.reviews = serv_info["reviews"]
+
+                self.display_info_movie()
+
+    def get_movie_actors(self):
+        if len(self.actor) > 0:
+            client_msg = "actor-" + self.actor
+            serv_info = json.loads(send_msg_to_server(client_msg))
+            self.movies = serv_info["movies"]
+            print(self.movies)
+            self.display_info_actor()
+
     def next(self, event):
         self.widgets["cell"].delete('1.0', END)
         if self.pos == 6:
@@ -166,7 +202,6 @@ class ClientGraphics(object):
         else:
             self.pos -= 1
         self.widgets["cell"].insert(END, self.reviews[self.pos])
-
 
 
 if __name__ == '__main__':

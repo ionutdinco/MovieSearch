@@ -58,6 +58,8 @@ def threaded_client(connection):
             reply = get_reviews(client_msg[1])
         if client_msg[0] == "stop":
             break
+        length_msg = len(reply)
+        connection.sendall(str.encode(str(length_msg)))
         connection.sendall(str.encode(reply))
     connection.close()
 
