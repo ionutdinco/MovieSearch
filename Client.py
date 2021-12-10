@@ -1,9 +1,12 @@
+from io import BytesIO
 import json
-import math
-
 from tkinter import *
+from tkinter import messagebox
+
+from PIL import Image, ImageTk
+import urllib.request
 import socket
-import random
+import webbrowser
 
 ClientSocket = socket.socket()
 host = '127.0.0.1'
@@ -29,8 +32,6 @@ class ClientGraphics(object):
     H = 700
 
     def __init__(self):
-        self.nr_of_movies = 9
-        self.reviews_rows = 5
         self.window = Tk()
         self.frame = Frame(self.window, bg='ghost white')
         self.window.geometry("1500x700")
@@ -41,6 +42,7 @@ class ClientGraphics(object):
         self.movie = ""
         self.actor = ""
         self.url_image = ""
+        self.trailer = ""
         self.search = StringVar(self.frame)
         self.search_type = StringVar(self.frame)
         self.lst = list()
@@ -52,12 +54,10 @@ class ClientGraphics(object):
         self.h = 50
         self.home()
 
-
     def clear_frame(self):
         for widgets in self.frame.winfo_children():
             widgets.destroy()
 
-    
     def select(self):
         print(self.search_type.get())
         pass
@@ -98,6 +98,7 @@ class ClientGraphics(object):
                                     font=('Arial', 16, 'bold'), borderwidth=4, relief="groove")
                         cell.grid(row=i, column=j)
                         cell.insert(END, self.lst[i][j])
+                        cell.config(state=DISABLED)
                         scrollbar = Scrollbar(canvas, orient='vertical', command=cell.yview)
                         scrollbar.grid(row=i, column=2, sticky='ns')
                         cell['yscrollcommand'] = scrollbar.set
@@ -106,22 +107,44 @@ class ClientGraphics(object):
                                     font=('Arial', 16, 'bold'), borderwidth=4, relief="groove")
                         cell.grid(row=i, column=j)
                         cell.insert(END, self.lst[i][j])
+                        cell.config(state=DISABLED)
                 else:
                     if i == 4:
                         cell = Text(canvas, width=20, height=6, fg='blue',
                                     font=('Arial', 16, 'bold'), borderwidth=4, relief="groove")
                         cell.grid(row=i, column=j)
                         cell.insert(END, self.lst[i][j])
+                        cell.config(state=DISABLED)
                     else:
                         cell = Text(canvas, width=20, height=3, fg='blue',
                                     font=('Arial', 16, 'bold'), borderwidth=4, relief="groove")
                         cell.grid(row=i, column=j)
                         cell.insert(END, self.lst[i][j])
+                        cell.config(state=DISABLED)
 
+        x = 3 / 4 * self.W
+        y = self.H / 9
+        canvas_tr = Canvas(self.frame, width=40, height=40, bg='black', highlightthickness=2,
+                           highlightbackground="cyan")
+        canvas_tr.bind("<Button-1>", self.open_url)
+        canvas_tr.place(x=x, y=y)
+
+        # points = [x,y,x+20,y,x+20,y+20,x,y+20]
+        # btn = canvas_tr.create_line(points, fill="orange", width=2)
+        # canvas_tr.pack(fill=BOTH, expand=1)
         button_reviews = Button(self.frame, text="Reviews >", command=self.display_reviews, bg='snow')
         button_reviews.place(x=self.W / 2 + 0.5 * self.w, y=self.H - 1.5 * self.h, width=self.w, height=self.h)
         button_reviews = Button(self.frame, text="< Back", command=self.home, bg='snow')
         button_reviews.place(x=self.W / 2 - 0.5 * self.w, y=self.H - 1.5 * self.h, width=self.w, height=self.h)
+
+        print(self.url_image)
+        # with urllib.request.urlopen("http://www.python.org") as url:
+        #     raw_data = url.read()
+        # url.close()
+        # im = Image.open(BytesIO(raw_data))
+        # image = ImageTk.PhotoImage(im)
+        # label1 = Label(self.frame, image=image)
+        # label1.place(x=0, y=0)
 
     def display_info_actor(self):
         self.clear_frame()
@@ -131,6 +154,7 @@ class ClientGraphics(object):
             cell = Label(canvas, width=50, height=2, fg='blue', text=self.movies.pop(0),
                          font=('Arial', 16, 'bold'), relief="groove")
             cell.pack()
+            cell.config(state=DISABLED)
         button_back = Button(self.frame, text="< Back", command=self.home, bg='snow')
         button_back.place(x=self.W / 4 - self.w / 2, y=self.H - 1.5 * self.h, width=self.w, height=self.h)
 
@@ -140,6 +164,7 @@ class ClientGraphics(object):
         cell = Text(canvas, fg='blue', font=('Arial', 16, 'bold'), borderwidth=4, relief="groove", padx=20, pady=20)
         cell.place(x=self.W / 4, y=50, width=2 * (self.W / 4), height=500)
         cell.insert(END, self.reviews[0])
+        cell.config(state=DISABLED)
         self.widgets["cell"] = cell
         next_btn = canvas.create_polygon(self.W / 5, self.H / 2, self.W / 5 + 40, self.H / 2 - 40, self.W / 5 + 40,
                                          self.H / 2 + 40, self.W / 5, self.H / 2, fill="red", outline="white", width=2)
@@ -157,15 +182,15 @@ class ClientGraphics(object):
         if len(self.movie) > 0:
             self.lst.clear()
             client_msg = "movie-" + self.movie
-            movie_info = json.loads(send_msg_to_server(client_msg))
-            print(movie_info)
-
-            if movie_info != "none":
+            movie_info = None
+            try:
+                movie_info = json.loads(send_msg_to_server(client_msg))
                 keys = list(movie_info.keys())
                 for i in range(self.total_rows - 1):
                     tp = (keys[i], movie_info.get(keys[i]))
                     self.lst.append(tp)
                 self.url_image = movie_info.get("movieImage")
+                self.trailer = movie_info.get("movieTrailer")
 
                 client_msg = "movies-" + self.movie
                 serv_info = json.loads(send_msg_to_server(client_msg))
@@ -179,6 +204,9 @@ class ClientGraphics(object):
 
                 self.display_info_movie()
 
+            except ValueError:
+                messagebox.showerror('BAD LUCK', 'Movie Not Found! Try Again!')
+
     def get_movie_actors(self):
         if len(self.actor) > 0:
             client_msg = "actor-" + self.actor
@@ -188,24 +216,29 @@ class ClientGraphics(object):
             self.display_info_actor()
 
     def next(self, event):
+        self.widgets["cell"].config(state=NORMAL)
         self.widgets["cell"].delete('1.0', END)
-        if self.pos == 6:
+        if self.pos == len(self.reviews) - 1:
             self.pos = 0
         else:
             self.pos += 1
         self.widgets["cell"].insert(END, self.reviews[self.pos])
+        self.widgets["cell"].config(state=DISABLED)
 
     def prev(self, event):
+        self.widgets["cell"].config(state=NORMAL)
         self.widgets["cell"].delete('1.0', END)
         if self.pos == 0:
-            self.pos = 6
+            self.pos = len(self.reviews) - 1
         else:
             self.pos -= 1
         self.widgets["cell"].insert(END, self.reviews[self.pos])
+        self.widgets["cell"].config(state=DISABLED)
+
+    def open_url(self, event):
+        webbrowser.open_new(self.trailer)
 
 
 if __name__ == '__main__':
     w = ClientGraphics()
     w.window.mainloop()
-# x = send_msg_to_server("movie:PIRATHES pf the C 2")
-# print(x)

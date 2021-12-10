@@ -62,7 +62,6 @@ class DataBTool(object):
                 data["movieImage"] = online_info["image"]
             else:
                 return None
-        print(len(json.dumps(data)))
         return data
 
     def get_actor_movies(self, name):
@@ -84,7 +83,6 @@ class DataBTool(object):
         for actor in result:
             cast.append(actor[0])
         data["cast"] = cast
-        print(data["cast"])
         return data
 
     def get_reviews(self, movie):
@@ -95,8 +93,29 @@ class DataBTool(object):
         for comment in result:
             reviews.append(comment[0])
         data["reviews"] = reviews
-        print(data)
         return data
 
     def insert_info_movie(self, online_info):
-        pass
+
+        mysql_q = "insert into movies_store (movieName, movieTrailer, movieRating, movieDirector, movieImage) values (%s, %s, %s, %s, %s)"
+        values = (online_info["title"].strip(), online_info["trailer"], online_info["rating"], online_info["director"], online_info["image"])
+        self.cursor.execute(mysql_q, values)
+
+        actors = online_info["cast"]
+        for actor in actors:
+            mysql_q = "insert into actors (actorName, movie) values (%s, %s)"
+            values = (actor.strip(), online_info["title"])
+            self.cursor.execute(mysql_q, values)
+
+        reviews = online_info["reviews"]
+        for review in reviews:
+            mysql_q = "insert into reviews (movieName, comment) values (%s, %s)"
+            values = (online_info["title"], review)
+            self.cursor.execute(mysql_q, values)
+
+        self.data_base_connection.commit()
+
+
+if __name__ == '__main__':
+    w = DataBTool()
+    w.get_reviews("dacii")
