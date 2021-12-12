@@ -1,3 +1,4 @@
+import json
 import requests
 from bs4 import BeautifulSoup
 from numpy import unicode
@@ -70,7 +71,35 @@ class ScrapingTool(object):
                 break
             i += 1
         results["reviews"] = rev
-        print(rev)
+
+        cast_url = url + "fullcredits/"
+        page = requests.get(cast_url)
+        soup = BeautifulSoup(page.content, "lxml")
+        table = soup.find('table', class_="cast_list")
+        cast = list()
+        i = 1
+        rows = table.find_all("td", class_="primary_photo")
+        for row in rows:
+            cast.append(row.find_next_sibling("td").text)
+            if i == 10:
+                break
+            i += 1
+        results["cast"] = cast
+
+        trailer_url = "https://www.youtube.com/results?search_query=" + unicode(title + " movie trailer")
+        page = requests.get(trailer_url)
+        soup = page.text
+        soup = soup[soup.find("navigationEndpoint"):]
+        soup = soup[1:]
+        soup = soup[soup.find("navigationEndpoint"):]
+        soup = soup[soup.find("url"):soup.find("webPageType")]
+        soup = soup[soup.find(':"') + 2:]
+        soup = soup[:soup.find('"')]
+        trailer = "https://www.youtube.com/" + soup
+        results["trailer"] = trailer
+        print(trailer)
+
+        return results
 
 
 if __name__ == '__main__':

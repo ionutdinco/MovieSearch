@@ -18,12 +18,13 @@ ServerSocket.listen(10)
 
 db = DBTool.DataBTool()
 threads_game = list(list())
-my_lock = RLock()
 
 
 def get_information_movie(title) -> json:
     data = db.get_movie_info(title)
     print(data)
+    if not data:
+        return "none"
     return json.dumps(data)
 
 
