@@ -64,7 +64,7 @@ class ClientGraphics(object):
 
     def home(self):
         self.clear_frame()
-        entry_movie = Entry(self.frame, textvariable=self.search, bg='snow', font=('Arial', 20, 'bold'))
+        entry_movie = Entry(self.frame, textvariable=self.search, bg='snow', font=('Arial', 15, 'bold'))
         entry_movie.place(x=self.W / 2 - 3 / 4 * self.w, y=self.H / 2 - 1.5 * self.h, width=3 / 2 * self.w,
                           height=self.h)
         self.search_type.set("Movie")
